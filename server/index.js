@@ -12,15 +12,16 @@ connectDB();
 // Middleware
 app.use(express.json({ extended: false }));
 const corsOptions = {
-    origin: process.env.NODE_ENV === 'production' 
-      ? 'https://observatorio-da-mulher.vercel.app' 
-      : 'http://localhost:3000',
-    optionsSuccessStatus: 200
-  };
-  app.use(cors(corsOptions));
+   origin: [
+     'https://observatorio-da-mulher.vercel.app',
+     'https://observatorio-da-mulher-29cd1fwu0-dominicks-projects-20c5fdae.vercel.app'
+   ],
+   optionsSuccessStatus: 200
+};
+app.use(cors(corsOptions));
 
 // Rotas
-app.use('/api', require('./routes/api'));
+app.use('/', require('./routes/api')); // Changed from '/api' to '/'
 
 // Porta do servidor
 const PORT = process.env.PORT || 5000;
