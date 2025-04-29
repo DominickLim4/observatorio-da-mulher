@@ -13,7 +13,7 @@ connectDB();
 app.use(express.json({ extended: false }));
 const corsOptions = {
     origin: process.env.NODE_ENV === 'production' 
-      ? 'https://seu-dominio-frontend.vercel.app' 
+      ? 'https://observatorio-da-mulher.vercel.app' 
       : 'http://localhost:3000',
     optionsSuccessStatus: 200
   };
