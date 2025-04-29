@@ -1,70 +1,93 @@
-# Getting Started with Create React App
+# Mulheres App
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Aplicação web para auxílio de mulheres em situação de vulnerabilidade, com foco na coleta de dados e visualização dinâmica de resultados.
 
-## Available Scripts
+## Tecnologias Utilizadas
 
-In the project directory, you can run:
+### Backend
+- **MongoDB**: Banco de dados não relacional para armazenar os dados do formulário em formato JSON
+- **Node.js & Express**: Servidor da aplicação e gerenciamento de requisições
+- **Firebase**: Autenticação de usuários
 
-### `npm start`
+### Frontend
+- **React.js**: Framework para criar interfaces de usuário dinâmicas
+- **Chart.js**: Criação de dashboards interativos
+- **Bootstrap**: Framework CSS para responsividade e componentes de UI
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+## Estrutura do Projeto
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+```
+mulheres-app/
+├── client/                   # Frontend React
+│   ├── public/
+│   │   ├── index.html
+│   │   └── favicon.ico
+│   ├── src/
+│   │   ├── components/       # Componentes React reutilizáveis
+│   │   ├── pages/            # Páginas principais
+│   │   ├── services/         # Serviços para API e Firebase
+│   │   ├── App.js
+│   │   ├── index.js
+│   │   └── App.css
+│   ├── package.json
+│   └── .gitignore
+├── server/                   # Backend Node.js/Express
+│   ├── config/
+│   ├── models/
+│   ├── routes/
+│   ├── index.js
+│   ├── package.json
+│   └── .gitignore
+└── README.md
+```
 
-### `npm test`
+## Funcionalidades
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+1. **Login**: Autenticação via Firebase para acesso à área de dashboards
+2. **Página Inicial**: Landing page informativa sobre o projeto
+3. **Formulário**: Coleta de dados com perguntas de múltipla escolha
+4. **Dashboards**: Visualização gráfica dos resultados coletados
 
-### `npm run build`
+## Configuração do Ambiente
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+### Pré-requisitos
+- Node.js e npm instalados
+- MongoDB instalado localmente ou conta no MongoDB Atlas
+- Conta no Firebase
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+### Configuração do Firebase
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+1. Acesse [console.firebase.google.com](https://console.firebase.google.com/)
+2. Crie um novo projeto
+3. Em "Authentication", ative o provedor de email/senha
+4. Em "Project Settings", copie as configurações do Firebase para o arquivo `firebase.js`
 
-### `npm run eject`
+### Instalação e Execução
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+```bash
+# Clone o repositório
+git clone <url-do-repositorio>
+cd mulheres-app
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+# Configuração do Backend
+cd server
+npm install
+# Crie um arquivo .env com suas variáveis de ambiente (MONGO_URI, PORT)
+npm run dev
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+# Configuração do Frontend
+cd ../client
+npm install
+npm start
+```
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+## Rotas da Aplicação
 
-## Learn More
+- `/`: Página inicial
+- `/login`: Página de login
+- `/form`: Formulário para coleta de dados
+- `/dashboard`: Visualização dos resultados (protegida por autenticação)
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+## Licença
 
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+Este projeto está licenciado sob a licença MIT.

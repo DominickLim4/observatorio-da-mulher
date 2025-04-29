@@ -1,38 +1,180 @@
-.App {
-  text-align: center;
+/* client/src/App.css */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+body, h1, h2, h3, h4, h5, h6, p, span, button, input, textarea, select, option {
+ font-family: 'Poppins', sans-serif;
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
+body {
+ background-color: #f5f5f5;
+ color: #333;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
+h1, h2 {
+ font-weight: 600;
+ letter-spacing: -0.5px;
 }
 
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
+h3, h4, h5 {
+ font-weight: 500;
+ letter-spacing: -0.3px;
 }
 
-.App-link {
-  color: #61dafb;
+p, span, button, input, textarea, select, option {
+ font-weight: 400;
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.btn {
+ font-weight: 500;
+ letter-spacing: 0.2px;
+}
+
+.navbar {
+ box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.navbar-dark.bg-primary {
+ background-color: #6a0dad !important;
+}
+
+.card {
+ border-radius: 8px;
+ border: none;
+ box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+ transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.card:hover {
+ transform: translateY(-3px);
+ box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
+}
+
+.btn-primary {
+ background-color: #6a0dad;
+ border-color: #6a0dad;
+ box-shadow: 0 2px 4px rgba(106, 13, 173, 0.3);
+}
+
+.btn-primary:hover,
+.btn-primary:focus,
+.btn-primary:active {
+ background-color: #5a0c93 !important;
+ border-color: #5a0c93 !important;
+ box-shadow: 0 4px 8px rgba(106, 13, 173, 0.4) !important;
+}
+
+.btn-danger {
+ box-shadow: 0 2px 4px rgba(220, 53, 69, 0.3);
+}
+
+.btn-danger:hover,
+.btn-danger:focus,
+.btn-danger:active {
+ box-shadow: 0 4px 8px rgba(220, 53, 69, 0.4) !important;
+}
+
+.jumbotron {
+ border-radius: 10px;
+ box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+ border-left: 5px solid #6a0dad;
+}
+
+.form-check-input:checked {
+ background-color: #6a0dad;
+ border-color: #6a0dad;
+}
+
+.form-control:focus {
+ border-color: #6a0dad;
+ box-shadow: 0 0 0 0.25rem rgba(106, 13, 173, 0.25);
+}
+
+.question-container {
+ background-color: #f8f9fa;
+ border-left: 4px solid #6a0dad;
+ border-radius: 8px;
+ box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+ transition: transform 0.2s;
+}
+
+.question-container:hover {
+ transform: translateY(-2px);
+}
+
+.nav-tabs .nav-link {
+ color: #6a0dad;
+ font-weight: 500;
+}
+
+.nav-tabs .nav-link.active {
+ color: #6a0dad;
+ border-bottom: 3px solid #6a0dad;
+ font-weight: 600;
+}
+
+.chart-container {
+ padding: 15px;
+ border-radius: 8px;
+ background: white;
+ box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.alert {
+ border-radius: 8px;
+ border: none;
+ box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.alert-success {
+ background-color: #d4edda;
+ border-left: 4px solid #28a745;
+}
+
+.alert-danger {
+ background-color: #f8d7da;
+ border-left: 4px solid #dc3545;
+}
+
+h2, h3, h4, h5 {
+ color: #333;
+ font-weight: 600;
+}
+
+.card-title {
+ color: #6a0dad;
+ font-weight: 600;
+}
+
+.bg-light {
+ background-color: #f8f9fa !important;
+}
+
+.form-label {
+ font-weight: 500;
+}
+
+.spinner-border {
+ border-width: 0.2em;
+}
+
+/* Animações */
+@keyframes fadeIn {
+ from { opacity: 0; transform: translateY(10px); }
+ to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in {
+ animation: fadeIn 0.5s ease-in-out;
+}
+
+/* Media queries para responsividade */
+@media (max-width: 768px) {
+ .container {
+   padding-left: 15px;
+   padding-right: 15px;
+ }
+ 
+ .card-body {
+   padding: 15px;
+ }
 }
