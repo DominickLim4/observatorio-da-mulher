@@ -9,9 +9,9 @@ export const submitForm = async (formData) => {
  return response.data;
 };
 
-export const getForms = async () => {
+/*export const getForms = async () => {
  const response = await api.get('/forms');
  return response.data;
-};
+};*/
 
 export default api;
