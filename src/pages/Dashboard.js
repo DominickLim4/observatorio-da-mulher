@@ -13,6 +13,9 @@ import {
   ArcElement
 } from 'chart.js';
 
+// Importar perguntas do formulário para exibição
+import { questions } from '../data/questions'; // Você precisará criar este arquivo
+
 // Registrar componentes do Chart.js
 ChartJS.register(
   CategoryScale,
@@ -24,12 +27,95 @@ ChartJS.register(
   ArcElement
 );
 
+// Componente de seleção de resposta individual
+const ResponseSelector = ({ responses, selectedId, onChange }) => {
+  return (
+    <div className="card shadow mb-4">
+      <div className="card-body">
+        <h5 className="card-title">Selecionar Resposta Individual</h5>
+        <select 
+          className="form-select" 
+          value={selectedId || ''}
+          onChange={(e) => onChange(e.target.value)}
+        >
+          <option value="">Selecione uma resposta</option>
+          {responses.map((response) => (
+            <option key={response._id} value={response._id}>
+              ID: {response._id.substring(0, 8)} - {new Date(response.createdAt).toLocaleDateString('pt-BR')}
+            </option>
+          ))}
+        </select>
+      </div>
+    </div>
+  );
+};
+
+// Componente de visualização detalhada de resposta
+const ResponseDetail = ({ response, questions }) => {
+  if (!response) return (
+    <div className="card shadow">
+      <div className="card-body text-center py-5">
+        <p className="text-muted">Selecione uma resposta para visualizar os detalhes</p>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="card shadow">
+      <div className="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+        <h5 className="m-0">Detalhes da Resposta</h5>
+        <div>
+          <span className="badge bg-light text-dark me-2">
+            ID: {response._id}
+          </span>
+          <span className="badge bg-light text-dark">
+            Data: {new Date(response.createdAt).toLocaleDateString('pt-BR')}
+          </span>
+        </div>
+      </div>
+      <div className="card-body">
+        <div className="table-responsive">
+          <table className="table table-striped">
+            <thead>
+              <tr>
+                <th>Pergunta</th>
+                <th>Resposta</th>
+              </tr>
+            </thead>
+            <tbody>
+              {questions.map((question) => {
+                const answer = response.responses[question.id];
+                let displayAnswer = '';
+                
+                if (Array.isArray(answer)) {
+                  displayAnswer = answer.join(', ');
+                } else if (answer) {
+                  displayAnswer = answer;
+                }
+                
+                return (
+                  <tr key={question.id}>
+                    <td>{question.title}</td>
+                    <td>{displayAnswer || 'Sem resposta'}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const Dashboard = () => {
   const [formData, setFormData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('educacao');
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [selectedResponseId, setSelectedResponseId] = useState(null);
+  const [viewMode, setViewMode] = useState('charts'); // 'charts' ou 'individual'
 
   useEffect(() => {
     loadData();
@@ -59,6 +145,7 @@ const Dashboard = () => {
       setFormData([]);
       setShowConfirmDialog(false);
       setError(null);
+      setSelectedResponseId(null);
     } catch (err) {
       setError('Erro ao limpar dados');
       console.error(err);
@@ -128,6 +215,9 @@ const Dashboard = () => {
     };
   };
 
+  // Obter a resposta selecionada
+  const selectedResponse = formData.find(form => form._id === selectedResponseId);
+
   // Opções comuns para gráficos
   const chartOptions = {
     responsive: true,
@@ -169,18 +259,18 @@ const Dashboard = () => {
     <div className="container mt-5 mb-5">
       <div className="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
         <div>
-            <h2 style={{ color: '#6a0dad' }}>Dashboard de Resultados</h2>
-            <p className="text-muted">Visualização dos dados coletados</p>
+          <h2 style={{ color: '#6a0dad' }}>Dashboard de Resultados</h2>
+          <p className="text-muted">Visualização dos dados coletados</p>
         </div>
         <button 
-            className="btn btn-danger d-flex align-items-center" 
-            onClick={() => setShowConfirmDialog(true)}
-            disabled={loading || formData.length === 0}
+          className="btn btn-danger d-flex align-items-center" 
+          onClick={() => setShowConfirmDialog(true)}
+          disabled={loading || formData.length === 0}
         >
-            <i className="bi bi-trash me-2"></i>
-            <span>Limpar Todos os Dados</span>
+          <i className="bi bi-trash me-2"></i>
+          <span>Limpar Todos os Dados</span>
         </button>
-        </div>
+      </div>
       
       {/* Dialog de confirmação */}
       {showConfirmDialog && (
@@ -238,523 +328,561 @@ const Dashboard = () => {
         </div>
       </div>
 
-      <ul className="nav nav-tabs mb-4 fade-in">
-        <li className="nav-item">
-          <button 
-            className={`nav-link ${activeTab === 'educacao' ? 'active' : ''}`}
-            onClick={() => setActiveTab('educacao')}
-          >
-            Educação
-          </button>
-        </li>
-        <li className="nav-item">
-          <button 
-            className={`nav-link ${activeTab === 'saude' ? 'active' : ''}`}
-            onClick={() => setActiveTab('saude')}
-          >
-            Saúde
-          </button>
-        </li>
-        <li className="nav-item">
-          <button 
-            className={`nav-link ${activeTab === 'violencia' ? 'active' : ''}`}
-            onClick={() => setActiveTab('violencia')}
-          >
-            Violência
-          </button>
-        </li>
-        <li className="nav-item">
-          <button 
-            className={`nav-link ${activeTab === 'geografia' ? 'active' : ''}`}
-            onClick={() => setActiveTab('geografia')}
-          >
-            Geografia
-          </button>
-        </li>
-      </ul>
+      {/* Botões de alternância entre modos de visualização */}
+      <div className="btn-group mb-4" role="group">
+        <button 
+          className={`btn ${viewMode === 'charts' ? 'btn-primary' : 'btn-outline-primary'}`}
+          onClick={() => setViewMode('charts')}
+        >
+          <i className="bi bi-bar-chart-fill me-2"></i>
+          Gráficos
+        </button>
+        <button 
+          className={`btn ${viewMode === 'individual' ? 'btn-primary' : 'btn-outline-primary'}`}
+          onClick={() => setViewMode('individual')}
+        >
+          <i className="bi bi-person-fill me-2"></i>
+          Respostas Individuais
+        </button>
+      </div>
 
-      {activeTab === 'educacao' && (
-        <div>
-          <div className="row mb-4">
-            <div className="col-md-6 mb-4">
-              <div className="card shadow-sm">
-                <div className="card-body chart-container">
-                  <h5 className="card-title mb-4">Está estudando atualmente</h5>
-                  <Pie
-                    data={processData('estudando')}
-                    options={{
-                      ...chartOptions,
-                      plugins: {
-                        ...chartOptions.plugins,
-                        title: {
-                          ...chartOptions.plugins.title,
-                          text: 'Distribuição por status educacional'
-                        }
-                      }
-                    }}
-                  />
-                </div>
-              </div>
-            </div>
-            
-            <div className="col-md-6 mb-4">
-              <div className="card shadow-sm">
-                <div className="card-body chart-container">
-                  <h5 className="card-title mb-4">Motivos de interrupção dos estudos</h5>
-                  <Bar
-                    data={processData('motivo_interrupcao')}
-                    options={{
-                      ...chartOptions,
-                      indexAxis: 'y',
-                      plugins: {
-                        ...chartOptions.plugins,
-                        title: {
-                          ...chartOptions.plugins.title,
-                          text: 'Motivos de interrupção'
-                        }
-                      }
-                    }}
-                  />
-                </div>
-              </div>
-            </div>
+      {viewMode === 'individual' ? (
+        <div className="row">
+          <div className="col-md-4">
+            <ResponseSelector 
+              responses={formData} 
+              selectedId={selectedResponseId}
+              onChange={setSelectedResponseId}
+            />
           </div>
-
-          <div className="row mb-4">
-            <div className="col-md-6 mb-4">
-              <div className="card shadow-sm">
-                <div className="card-body chart-container">
-                  <h5 className="card-title mb-4">Tempo de interrupção dos estudos</h5>
-                  <Doughnut
-                    data={processData('tempo_interrupcao')}
-                    options={{
-                      ...chartOptions,
-                      plugins: {
-                        ...chartOptions.plugins,
-                        title: {
-                          ...chartOptions.plugins.title,
-                          text: 'Distribuição por tempo de interrupção'
-                        }
-                      }
-                    }}
-                  />
-                </div>
-              </div>
-            </div>
-            
-            <div className="col-md-6 mb-4">
-              <div className="card shadow-sm">
-                <div className="card-body chart-container">
-                  <h5 className="card-title mb-4">Dificuldades na educação</h5>
-                  <Bar
-                    data={processData('dificuldades_educacao')}
-                    options={{
-                      ...chartOptions,
-                      indexAxis: 'y',
-                      plugins: {
-                        ...chartOptions.plugins,
-                        title: {
-                          ...chartOptions.plugins.title,
-                          text: 'Principais dificuldades educacionais'
-                        }
-                      }
-                    }}
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="row mb-4">
-            <div className="col-md-6 mb-4">
-              <div className="card shadow-sm">
-                <div className="card-body chart-container">
-                  <h5 className="card-title mb-4">Acesso à educação a distância</h5>
-                  <Pie
-                    data={processData('educacao_distancia')}
-                    options={{
-                      ...chartOptions,
-                      plugins: {
-                        ...chartOptions.plugins,
-                        title: {
-                          ...chartOptions.plugins.title,
-                          text: 'Acesso à educação a distância'
-                        }
-                      }
-                    }}
-                  />
-                </div>
-              </div>
-            </div>
-            
-            <div className="col-md-6 mb-4">
-              <div className="card shadow-sm">
-                <div className="card-body chart-container">
-                  <h5 className="card-title mb-4">Qualidade da educação a distância</h5>
-                  <Bar
-                    data={processData('qualidade_ead')}
-                    options={{
-                      ...chartOptions,
-                      plugins: {
-                        ...chartOptions.plugins,
-                        title: {
-                          ...chartOptions.plugins.title,
-                          text: 'Avaliação da qualidade da EAD'
-                        }
-                      }
-                    }}
-                  />
-                </div>
-              </div>
-            </div>
+          <div className="col-md-8">
+            <ResponseDetail 
+              response={selectedResponse} 
+              questions={questions}
+            />
           </div>
         </div>
-      )}
+      ) : (
+        <>
+          <ul className="nav nav-tabs mb-4 fade-in">
+            <li className="nav-item">
+              <button 
+                className={`nav-link ${activeTab === 'educacao' ? 'active' : ''}`}
+                onClick={() => setActiveTab('educacao')}
+              >
+                Educação
+              </button>
+            </li>
+            <li className="nav-item">
+              <button 
+                className={`nav-link ${activeTab === 'saude' ? 'active' : ''}`}
+                onClick={() => setActiveTab('saude')}
+              >
+                Saúde
+              </button>
+            </li>
+            <li className="nav-item">
+              <button 
+                className={`nav-link ${activeTab === 'violencia' ? 'active' : ''}`}
+                onClick={() => setActiveTab('violencia')}
+              >
+                Violência
+              </button>
+            </li>
+            <li className="nav-item">
+              <button 
+                className={`nav-link ${activeTab === 'geografia' ? 'active' : ''}`}
+                onClick={() => setActiveTab('geografia')}
+              >
+                Geografia
+              </button>
+            </li>
+          </ul>
 
-      {activeTab === 'saude' && (
-        <div>
-          <div className="row mb-4">
-            <div className="col-md-6 mb-4">
-              <div className="card shadow-sm">
-                <div className="card-body chart-container">
-                  <h5 className="card-title mb-4">Possui plano de saúde</h5>
-                  <Pie
-                    data={processData('plano_saude')}
-                    options={{
-                      ...chartOptions,
-                      plugins: {
-                        ...chartOptions.plugins,
-                        title: {
-                          ...chartOptions.plugins.title,
-                          text: 'Distribuição por acesso a plano de saúde'
-                        }
-                      }
-                    }}
-                  />
+          {activeTab === 'educacao' && (
+            <div>
+              <div className="row mb-4">
+                <div className="col-md-6 mb-4">
+                  <div className="card shadow-sm">
+                    <div className="card-body chart-container">
+                      <h5 className="card-title mb-4">Está estudando atualmente</h5>
+                      <Pie
+                        data={processData('estudando')}
+                        options={{
+                          ...chartOptions,
+                          plugins: {
+                            ...chartOptions.plugins,
+                            title: {
+                              ...chartOptions.plugins.title,
+                              text: 'Distribuição por status educacional'
+                            }
+                          }
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="col-md-6 mb-4">
+                  <div className="card shadow-sm">
+                    <div className="card-body chart-container">
+                      <h5 className="card-title mb-4">Motivos de interrupção dos estudos</h5>
+                      <Bar
+                        data={processData('motivo_interrupcao')}
+                        options={{
+                          ...chartOptions,
+                          indexAxis: 'y',
+                          plugins: {
+                            ...chartOptions.plugins,
+                            title: {
+                              ...chartOptions.plugins.title,
+                              text: 'Motivos de interrupção'
+                            }
+                          }
+                        }}
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
-            
-            <div className="col-md-6 mb-4">
-              <div className="card shadow-sm">
-                <div className="card-body chart-container">
-                  <h5 className="card-title mb-4">Acesso a hospital público</h5>
-                  <Pie
-                    data={processData('acesso_hospital_publico')}
-                    options={{
-                      ...chartOptions,
-                      plugins: {
-                        ...chartOptions.plugins,
-                        title: {
-                          ...chartOptions.plugins.title,
-                          text: 'Acesso a serviços públicos de saúde'
-                        }
-                      }
-                    }}
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
 
-          <div className="row mb-4">
-            <div className="col-md-6 mb-4">
-              <div className="card shadow-sm">
-                <div className="card-body chart-container">
-                  <h5 className="card-title mb-4">Adequação do atendimento público</h5>
-                  <Pie
-                    data={processData('atendimento_adequado')}
-                    options={{
-                      ...chartOptions,
-                      plugins: {
-                        ...chartOptions.plugins,
-                        title: {
-                          ...chartOptions.plugins.title,
-                          text: 'Avaliação do atendimento na rede pública'
-                        }
-                      }
-                    }}
-                  />
+              <div className="row mb-4">
+                <div className="col-md-6 mb-4">
+                  <div className="card shadow-sm">
+                    <div className="card-body chart-container">
+                      <h5 className="card-title mb-4">Tempo de interrupção dos estudos</h5>
+                      <Doughnut
+                        data={processData('tempo_interrupcao')}
+                        options={{
+                          ...chartOptions,
+                          plugins: {
+                            ...chartOptions.plugins,
+                            title: {
+                              ...chartOptions.plugins.title,
+                              text: 'Distribuição por tempo de interrupção'
+                            }
+                          }
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="col-md-6 mb-4">
+                  <div className="card shadow-sm">
+                    <div className="card-body chart-container">
+                      <h5 className="card-title mb-4">Dificuldades na educação</h5>
+                      <Bar
+                        data={processData('dificuldades_educacao')}
+                        options={{
+                          ...chartOptions,
+                          indexAxis: 'y',
+                          plugins: {
+                            ...chartOptions.plugins,
+                            title: {
+                              ...chartOptions.plugins.title,
+                              text: 'Principais dificuldades educacionais'
+                            }
+                          }
+                        }}
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
-            
-            <div className="col-md-6 mb-4">
-              <div className="card shadow-sm">
-                <div className="card-body chart-container">
-                  <h5 className="card-title mb-4">Região precária em saúde</h5>
-                  <Pie
-                    data={processData('regiao_precaria')}
-                    options={{
-                      ...chartOptions,
-                      plugins: {
-                        ...chartOptions.plugins,
-                        title: {
-                          ...chartOptions.plugins.title,
-                          text: 'Avaliação da região em termos de saúde'
-                        }
-                      }
-                    }}
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
-      {activeTab === 'violencia' && (
-        <div>
-          <div className="row mb-4">
-            <div className="col-md-6 mb-4">
-              <div className="card shadow-sm">
-                <div className="card-body chart-container">
-                  <h5 className="card-title mb-4">Já sofreu violência</h5>
-                  <Pie
-                    data={processData('sofreu_violencia')}
-                    options={{
-                      ...chartOptions,
-                      plugins: {
-                        ...chartOptions.plugins,
-                        title: {
-                          ...chartOptions.plugins.title,
-                          text: 'Ocorrência de violência'
-                        }
-                      }
-                    }}
-                  />
+              <div className="row mb-4">
+                <div className="col-md-6 mb-4">
+                  <div className="card shadow-sm">
+                    <div className="card-body chart-container">
+                      <h5 className="card-title mb-4">Acesso à educação a distância</h5>
+                      <Pie
+                        data={processData('educacao_distancia')}
+                        options={{
+                          ...chartOptions,
+                          plugins: {
+                            ...chartOptions.plugins,
+                            title: {
+                              ...chartOptions.plugins.title,
+                              text: 'Acesso à educação a distância'
+                            }
+                          }
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="col-md-6 mb-4">
+                  <div className="card shadow-sm">
+                    <div className="card-body chart-container">
+                      <h5 className="card-title mb-4">Qualidade da educação a distância</h5>
+                      <Bar
+                        data={processData('qualidade_ead')}
+                        options={{
+                          ...chartOptions,
+                          plugins: {
+                            ...chartOptions.plugins,
+                            title: {
+                              ...chartOptions.plugins.title,
+                              text: 'Avaliação da qualidade da EAD'
+                            }
+                          }
+                        }}
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
-            
-            <div className="col-md-6 mb-4">
-              <div className="card shadow-sm">
-                <div className="card-body chart-container">
-                  <h5 className="card-title mb-4">Tipos de violência</h5>
-                  <Bar
-                    data={processData('tipo_violencia')}
-                    options={{
-                      ...chartOptions,
-                      indexAxis: 'y',
-                      plugins: {
-                        ...chartOptions.plugins,
-                        title: {
-                          ...chartOptions.plugins.title,
-                          text: 'Distribuição por tipos de violência'
-                        }
-                      }
-                    }}
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
+          )}
 
-          <div className="row mb-4">
-            <div className="col-md-6 mb-4">
-              <div className="card shadow-sm">
-                <div className="card-body chart-container">
-                  <h5 className="card-title mb-4">Autores da violência</h5>
-                  <Bar
-                    data={processData('autor_violencia')}
-                    options={{
-                      ...chartOptions,
-                      indexAxis: 'y',
-                      plugins: {
-                        ...chartOptions.plugins,
-                        title: {
-                          ...chartOptions.plugins.title,
-                          text: 'Autores da violência'
-                        }
-                      }
-                    }}
-                  />
+          {activeTab === 'saude' && (
+            <div>
+              <div className="row mb-4">
+                <div className="col-md-6 mb-4">
+                  <div className="card shadow-sm">
+                    <div className="card-body chart-container">
+                      <h5 className="card-title mb-4">Possui plano de saúde</h5>
+                      <Pie
+                        data={processData('plano_saude')}
+                        options={{
+                          ...chartOptions,
+                          plugins: {
+                            ...chartOptions.plugins,
+                            title: {
+                              ...chartOptions.plugins.title,
+                              text: 'Distribuição por acesso a plano de saúde'
+                            }
+                          }
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="col-md-6 mb-4">
+                  <div className="card shadow-sm">
+                    <div className="card-body chart-container">
+                      <h5 className="card-title mb-4">Acesso a hospital público</h5>
+                      <Pie
+                        data={processData('acesso_hospital_publico')}
+                        options={{
+                          ...chartOptions,
+                          plugins: {
+                            ...chartOptions.plugins,
+                            title: {
+                              ...chartOptions.plugins.title,
+                              text: 'Acesso a serviços públicos de saúde'
+                            }
+                          }
+                        }}
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
-            
-            <div className="col-md-6 mb-4">
-              <div className="card shadow-sm">
-                <div className="card-body chart-container">
-                  <h5 className="card-title mb-4">Frequência da violência</h5>
-                  <Doughnut
-                    data={processData('frequencia_violencia')}
-                    options={{
-                      ...chartOptions,
-                      plugins: {
-                        ...chartOptions.plugins,
-                        title: {
-                          ...chartOptions.plugins.title,
-                          text: 'Frequência da violência'
-                        }
-                      }
-                    }}
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
 
-          <div className="row mb-4">
-            <div className="col-md-6 mb-4">
-              <div className="card shadow-sm">
-                <div className="card-body chart-container">
-                  <h5 className="card-title mb-4">Conhecimento da Lei Maria da Penha</h5>
-                  <Pie
-                    data={processData('conhece_maria_penha')}
-                    options={{
-                      ...chartOptions,
-                      plugins: {
-                        ...chartOptions.plugins,
-                        title: {
-                          ...chartOptions.plugins.title,
-                          text: 'Conhecimento da Lei Maria da Penha'
-                        }
-                      }
-                    }}
-                  />
+              <div className="row mb-4">
+                <div className="col-md-6 mb-4">
+                  <div className="card shadow-sm">
+                    <div className="card-body chart-container">
+                      <h5 className="card-title mb-4">Adequação do atendimento público</h5>
+                      <Pie
+                        data={processData('atendimento_adequado')}
+                        options={{
+                          ...chartOptions,
+                          plugins: {
+                            ...chartOptions.plugins,
+                            title: {
+                              ...chartOptions.plugins.title,
+                              text: 'Avaliação do atendimento na rede pública'
+                            }
+                          }
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="col-md-6 mb-4">
+                  <div className="card shadow-sm">
+                    <div className="card-body chart-container">
+                      <h5 className="card-title mb-4">Região precária em saúde</h5>
+                      <Pie
+                        data={processData('regiao_precaria')}
+                        options={{
+                          ...chartOptions,
+                          plugins: {
+                            ...chartOptions.plugins,
+                            title: {
+                              ...chartOptions.plugins.title,
+                              text: 'Avaliação da região em termos de saúde'
+                            }
+                          }
+                        }}
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
-            
-            <div className="col-md-6 mb-4">
-              <div className="card shadow-sm">
-                <div className="card-body chart-container">
-                  <h5 className="card-title mb-4">Impacto na educação</h5>
-                  <Pie
-                    data={processData('impacto_educacao')}
-                    options={{
-                      ...chartOptions,
-                      plugins: {
-                        ...chartOptions.plugins,
-                        title: {
-                          ...chartOptions.plugins.title,
-                          text: 'Impacto da violência na educação'
-                        }
-                      }
-                    }}
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
+          )}
 
-          <div className="row mb-4">
-            <div className="col-md-6 mb-4">
-              <div className="card shadow-sm">
-                <div className="card-body chart-container">
-                  <h5 className="card-title mb-4">Barreiras para denúncia</h5>
-                  <Bar
-                    data={processData('barreiras_denuncia')}
-                    options={{
-                      ...chartOptions,
-                      indexAxis: 'y',
-                      plugins: {
-                        ...chartOptions.plugins,
-                        title: {
-                          ...chartOptions.plugins.title,
-                          text: 'Principais barreiras para denúncia'
-                        }
-                      }
-                    }}
-                  />
+          {activeTab === 'violencia' && (
+            <div>
+              <div className="row mb-4">
+                <div className="col-md-6 mb-4">
+                  <div className="card shadow-sm">
+                    <div className="card-body chart-container">
+                      <h5 className="card-title mb-4">Já sofreu violência</h5>
+                      <Pie
+                        data={processData('sofreu_violencia')}
+                        options={{
+                          ...chartOptions,
+                          plugins: {
+                            ...chartOptions.plugins,
+                            title: {
+                              ...chartOptions.plugins.title,
+                              text: 'Ocorrência de violência'
+                            }
+                          }
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="col-md-6 mb-4">
+                  <div className="card shadow-sm">
+                    <div className="card-body chart-container">
+                      <h5 className="card-title mb-4">Tipos de violência</h5>
+                      <Bar
+                        data={processData('tipo_violencia')}
+                        options={{
+                          ...chartOptions,
+                          indexAxis: 'y',
+                          plugins: {
+                            ...chartOptions.plugins,
+                            title: {
+                              ...chartOptions.plugins.title,
+                              text: 'Distribuição por tipos de violência'
+                            }
+                          }
+                        }}
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
-            
-            <div className="col-md-6 mb-4">
-              <div className="card shadow-sm">
-                <div className="card-body chart-container">
-                  <h5 className="card-title mb-4">Serviços conhecidos/utilizados</h5>
-                  <Bar
-                    data={processData('servicos_utilizados')}
-                    options={{
-                      ...chartOptions,
-                      plugins: {
-                        ...chartOptions.plugins,
-                        title: {
-                          ...chartOptions.plugins.title,
-                          text: 'Serviços de apoio conhecidos ou utilizados'
-                        }
-                      }
-                    }}
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
-      {activeTab === 'geografia' && (
-        <div>
-          <div className="row mb-4">
-            <div className="col-md-12 mb-4">
-              <div className="card shadow-sm">
-                <div className="card-body chart-container">
-                  <h5 className="card-title mb-4">Distribuição por bairro</h5>
-                  <Bar
-                    data={processData('bairro')}
-                    options={{
-                      ...chartOptions,
-                      plugins: {
-                        ...chartOptions.plugins,
-                        title: {
-                          ...chartOptions.plugins.title,
-                          text: 'Distribuição geográfica por bairro'
-                        }
-                      }
-                    }}
-                  />
+              <div className="row mb-4">
+                <div className="col-md-6 mb-4">
+                  <div className="card shadow-sm">
+                    <div className="card-body chart-container">
+                      <h5 className="card-title mb-4">Autores da violência</h5>
+                      <Bar
+                        data={processData('autor_violencia')}
+                        options={{
+                          ...chartOptions,
+                          indexAxis: 'y',
+                          plugins: {
+                            ...chartOptions.plugins,
+                            title: {
+                              ...chartOptions.plugins.title,
+                              text: 'Autores da violência'
+                            }
+                          }
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="col-md-6 mb-4">
+                  <div className="card shadow-sm">
+                    <div className="card-body chart-container">
+                      <h5 className="card-title mb-4">Frequência da violência</h5>
+                      <Doughnut
+                        data={processData('frequencia_violencia')}
+                        options={{
+                          ...chartOptions,
+                          plugins: {
+                            ...chartOptions.plugins,
+                            title: {
+                              ...chartOptions.plugins.title,
+                              text: 'Frequência da violência'
+                            }
+                          }
+                        }}
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
-          </div>
 
-          <div className="row mb-4">
-            <div className="col-md-6 mb-4">
-              <div className="card shadow-sm">
-                <div className="card-body chart-container">
-                  <h5 className="card-title mb-4">Segurança no bairro</h5>
-                  <Pie
-                    data={processData('seguranca_bairro')}
-                    options={{
-                      ...chartOptions,
-                      plugins: {
-                        ...chartOptions.plugins,
-                        title: {
-                          ...chartOptions.plugins.title,
-                          text: 'Percepção de segurança no bairro'
-                        }
-                      }
-                    }}
-                  />
+              <div className="row mb-4">
+                <div className="col-md-6 mb-4">
+                  <div className="card shadow-sm">
+                    <div className="card-body chart-container">
+                      <h5 className="card-title mb-4">Conhecimento da Lei Maria da Penha</h5>
+                      <Pie
+                        data={processData('conhece_maria_penha')}
+                        options={{
+                          ...chartOptions,
+                          plugins: {
+                            ...chartOptions.plugins,
+                            title: {
+                              ...chartOptions.plugins.title,
+                              text: 'Conhecimento da Lei Maria da Penha'
+                            }
+                          }
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="col-md-6 mb-4">
+                  <div className="card shadow-sm">
+                    <div className="card-body chart-container">
+                      <h5 className="card-title mb-4">Impacto na educação</h5>
+                      <Pie
+                        data={processData('impacto_educacao')}
+                        options={{
+                          ...chartOptions,
+                          plugins: {
+                            ...chartOptions.plugins,
+                            title: {
+                              ...chartOptions.plugins.title,
+                              text: 'Impacto da violência na educação'
+                            }
+                          }
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="row mb-4">
+                <div className="col-md-6 mb-4">
+                  <div className="card shadow-sm">
+                    <div className="card-body chart-container">
+                      <h5 className="card-title mb-4">Barreiras para denúncia</h5>
+                      <Bar
+                        data={processData('barreiras_denuncia')}
+                        options={{
+                          ...chartOptions,
+                          indexAxis: 'y',
+                          plugins: {
+                            ...chartOptions.plugins,
+                            title: {
+                              ...chartOptions.plugins.title,
+                              text: 'Principais barreiras para denúncia'
+                            }
+                          }
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="col-md-6 mb-4">
+                  <div className="card shadow-sm">
+                    <div className="card-body chart-container">
+                      <h5 className="card-title mb-4">Serviços conhecidos/utilizados</h5>
+                      <Bar
+                        data={processData('servicos_utilizados')}
+                        options={{
+                          ...chartOptions,
+                          plugins: {
+                            ...chartOptions.plugins,
+                            title: {
+                              ...chartOptions.plugins.title,
+                              text: 'Serviços de apoio conhecidos ou utilizados'
+                            }
+                          }
+                        }}
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
-            
-            <div className="col-md-6 mb-4">
-              <div className="card shadow-sm">
-                <div className="card-body chart-container">
-                  <h5 className="card-title mb-4">Mudança de residência devido à violência</h5>
-                  <Pie
-                    data={processData('mudanca_residencia')}
-                    options={{
-                      ...chartOptions,
-                      plugins: {
-                        ...chartOptions.plugins,
-                        title: {
-                          ...chartOptions.plugins.title,
-                          text: 'Mudança de residência por violência'
-                        }
-                      }
-                    }}
-                  />
+          )}
+
+          {activeTab === 'geografia' && (
+            <div>
+              <div className="row mb-4">
+                <div className="col-md-12 mb-4">
+                  <div className="card shadow-sm">
+                    <div className="card-body chart-container">
+                      <h5 className="card-title mb-4">Distribuição por bairro</h5>
+                      <Bar
+                        data={processData('bairro')}
+                        options={{
+                          ...chartOptions,
+                          plugins: {
+                            ...chartOptions.plugins,
+                            title: {
+                              ...chartOptions.plugins.title,
+                              text: 'Distribuição geográfica por bairro'
+                            }
+                          }
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="row mb-4">
+                <div className="col-md-6 mb-4">
+                  <div className="card shadow-sm">
+                    <div className="card-body chart-container">
+                      <h5 className="card-title mb-4">Segurança no bairro</h5>
+                      <Pie
+                        data={processData('seguranca_bairro')}
+                        options={{
+                          ...chartOptions,
+                          plugins: {
+                            ...chartOptions.plugins,
+                            title: {
+                              ...chartOptions.plugins.title,
+                              text: 'Percepção de segurança no bairro'
+                            }
+                          }
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="col-md-6 mb-4">
+                  <div className="card shadow-sm">
+                    <div className="card-body chart-container">
+                      <h5 className="card-title mb-4">Mudança de residência devido à violência</h5>
+                      <Pie
+                        data={processData('mudanca_residencia')}
+                        options={{
+                          ...chartOptions,
+                          plugins: {
+                            ...chartOptions.plugins,
+                            title: {
+                              ...chartOptions.plugins.title,
+                              text: 'Mudança de residência por violência'
+                            }
+                          }
+                        }}
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        </div>
+          )}
+        </>
       )}
     </div>
   );
