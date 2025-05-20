@@ -397,7 +397,7 @@ const Form = () => {
                 <div className="card-body">
                   <p className="text-muted mb-4">{steps[currentStep].description}</p>
                   
-                  <form onSubmit={handleSubmit}>
+                  <form onSubmit={(e) => e.preventDefault()}>
                     {getCurrentQuestions().map(question => renderQuestion(question))}
                     
                     <div className="d-flex justify-content-between mt-4">
@@ -423,9 +423,10 @@ const Form = () => {
                         </button>
                       ) : (
                         <button
-                          type="submit"
-                          className="btn btn-success btn-lg"
-                          disabled={isSubmitting || !isValid}
+                          type="button"
+                          className="btn btn-success btn-lg px-4 py-3"
+                          onClick={handleSubmit}
+                          disabled={isSubmitting}
                         >
                           {isSubmitting ? (
                             <>
@@ -435,7 +436,7 @@ const Form = () => {
                           ) : (
                             <>
                               <i className="bi bi-check-circle me-2"></i>
-                              Finalizar e Enviar
+                              Finalizar e Enviar Formulário
                             </>
                           )}
                         </button>
