@@ -21,7 +21,7 @@ const corsOptions = {
 app.use(cors(corsOptions));
 
 // Rotas
-app.use('/', require('./routes/api')); // Changed from '/api' to '/'
+app.use('/api', require('./routes/api')); // Changed from '/api' to '/'
 
 // Porta do servidor
 const PORT = process.env.PORT || 5000;
