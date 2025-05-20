@@ -124,6 +124,26 @@ const Form = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
+    // Verificar especificamente se há campos obrigatórios não preenchidos
+    const allRequiredAnswered = questions
+      .filter(q => q.required)
+      .every(q => {
+        // Pular verificação se a pergunta tiver condição que não foi atendida
+        if (q.conditional) {
+          const { field, value } = q.conditional;
+          if (formData[field] !== value) return true;
+        }
+        
+        return formData[q.id] && 
+               (!Array.isArray(formData[q.id]) || formData[q.id].length > 0);
+      });
+    
+    if (!allRequiredAnswered) {
+      setError('Por favor, responda todas as perguntas obrigatórias antes de enviar.');
+      window.scrollTo(0, 0);
+      return;
+    }
+    
     try {
       setIsSubmitting(true);
       setError('');
@@ -288,17 +308,22 @@ const Form = () => {
 
   // Renderiza indicador de progresso
   const renderProgressBar = () => {
+    // Calcula a porcentagem ajustada para que a última etapa não mostre 100% até enviar
+    const progressPercentage = currentStep < steps.length - 1 
+      ? ((currentStep + 1) / steps.length) * 100
+      : ((steps.length - 1) / steps.length) * 100;
+      
     return (
       <div className="progress mb-4">
         <div 
           className="progress-bar bg-primary" 
           role="progressbar" 
-          style={{ width: `${((currentStep + 1) / steps.length) * 100}%` }}
-          aria-valuenow={((currentStep + 1) / steps.length) * 100} 
+          style={{ width: `${progressPercentage}%` }}
+          aria-valuenow={progressPercentage} 
           aria-valuemin="0" 
           aria-valuemax="100"
         >
-          {Math.round(((currentStep + 1) / steps.length) * 100)}%
+          {Math.round(progressPercentage)}%
         </div>
       </div>
     );
@@ -311,8 +336,9 @@ const Form = () => {
           <li className="nav-item" key={index}>
             <button 
               className={`nav-link ${currentStep === index ? 'active' : ''} ${index < currentStep ? 'text-success' : ''}`}
-              onClick={() => setCurrentStep(index)}
-              disabled={index > currentStep && !isValid}
+              onClick={() => index <= currentStep ? setCurrentStep(index) : null}
+              disabled={index > currentStep}
+              type="button"
             >
               {index < currentStep ? <i className="bi bi-check-circle me-1"></i> : `${index + 1}.`} {step.title}
             </button>
