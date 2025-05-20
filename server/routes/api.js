@@ -3,6 +3,19 @@ const express = require('express');
 const router = express.Router();
 const Form = require('../models/Form');
 
+router.get('/forms/:id', async (req, res) => {
+  try {
+    const form = await Form.findOne({ responseId: req.params.id });
+    if (!form) {
+      return res.status(404).json({ msg: 'Resposta não encontrada' });
+    }
+    res.json(form);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Erro no servidor');
+  }
+});
+
 // Rota para enviar respostas do formulário
 router.post('/forms', async (req, res) => {
   try {
