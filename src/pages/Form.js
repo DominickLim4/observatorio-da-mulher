@@ -1,7 +1,8 @@
 // client/src/pages/Form.js
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { submitForm } from '../services/api';
+import { questions } from '../data/questions';
 
 const Form = () => {
   const navigate = useNavigate();
@@ -9,343 +10,80 @@ const Form = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
+  const [currentStep, setCurrentStep] = useState(0);
+  const [isValid, setIsValid] = useState(false);
 
-  // Perguntas do formulário
-  const questions = [
+  // Dividir perguntas em etapas lógicas
+  const steps = [
     {
-      id: 'bairro',
-      title: 'Qual bairro da sua residência?',
-      type: 'text',
-      required: true
+      title: 'Dados Pessoais',
+      description: 'Informações básicas sobre você',
+      questions: ['bairro']
     },
     {
-      id: 'estudando',
-      title: '1.1 Você está atualmente estudando?',
-      type: 'radio',
-      options: ['Sim', 'Não'],
-      required: true
-    },
-    {
-      id: 'motivo_interrupcao',
-      title: '1.2 Se não está estudando, qual motivo de interrupção dos estudos?',
-      type: 'checkbox',
-      options: [
-        'Necessidade de trabalhar',
-        'Gravidez/Maternidade',
-        'Violência doméstica',
-        'Falta de recursos financeiros',
-        'Falta de apoio',
-        'Outro'
-      ],
-      conditional: {
-        field: 'estudando',
-        value: 'Não'
-      }
-    },
-    {
-      id: 'tempo_interrupcao',
-      title: '1.3 Se você já interrompeu os estudos no passado, foi por quanto tempo?',
-      type: 'radio',
-      options: [
-        'Menos de 1 ano',
-        '1 a 3 anos',
-        '3 a 5 anos',
-        'Mais de 5 anos',
-        'Nunca interrompi'
+      title: 'Educação',
+      description: 'Questões relacionadas à sua formação educacional',
+      questions: [
+        'estudando', 'motivo_interrupcao', 'tempo_interrupcao',
+        'dificuldades_educacao', 'educacao_distancia', 'qualidade_ead'
       ]
     },
     {
-      id: 'dificuldades_educacao',
-      title: '1.4 Quais são as maiores dificuldades que você enfrenta para continuar sua educação?',
-      type: 'checkbox',
-      options: [
-        'Falta de tempo devido ao trabalho',
-        'Falta de apoio para cuidar dos filhos',
-        'Falta de recursos financeiros',
-        'Distância da instituição educacional',
-        'Medo ou insegurança',
-        'Outro'
+      title: 'Saúde',
+      description: 'Informações sobre acesso e qualidade da saúde',
+      questions: ['plano_saude', 'acesso_hospital_publico', 'atendimento_adequado', 'regiao_precaria']
+    },
+    {
+      title: 'Experiências com Violência',
+      description: 'Questões sobre experiências relacionadas à violência',
+      questions: [
+        'sofreu_violencia', 'tipo_violencia', 'autor_violencia',
+        'frequencia_violencia', 'procurou_ajuda', 'onde_procurou_ajuda',
+        'qualidade_atendimento', 'conhece_maria_penha', 'servicos_utilizados'
       ]
     },
     {
-      id: 'educacao_distancia',
-      title: '1.5 Você tem acesso a educação a distância?',
-      type: 'radio',
-      options: ['Sim', 'Não']
-    },
-    {
-      id: 'qualidade_ead',
-      title: '1.6 Se sim, como avalia a qualidade da educação a distância que você acessa?',
-      type: 'radio',
-      options: ['Muito boa', 'Boa', 'Regular', 'Ruim', 'Muito ruim'],
-      conditional: {
-        field: 'educacao_distancia',
-        value: 'Sim'
-      }
-    },
-    {
-      id: 'plano_saude',
-      title: '2.1 Você tem algum convênio ou plano de saúde?',
-      type: 'radio',
-      options: ['Sim', 'Não']
-    },
-    {
-      id: 'acesso_hospital_publico',
-      title: '2.2 Você já teve acesso a posto/centro de saúde/hospital público?',
-      type: 'radio',
-      options: ['Sim', 'Não']
-    },
-    {
-      id: 'atendimento_adequado',
-      title: '2.3 Você considera adequado o atendimento que recebeu na rede pública de saúde?',
-      type: 'radio',
-      options: ['Sim', 'Não'],
-      conditional: {
-        field: 'acesso_hospital_publico',
-        value: 'Sim'
-      }
-    },
-    {
-      id: 'regiao_precaria',
-      title: '2.4 Você considera a região que você mora precária em termos de saúde pública?',
-      type: 'radio',
-      options: ['Sim', 'Não']
-    },
-    {
-      id: 'sofreu_violencia',
-      title: '3.1 Você já sofreu algum tipo de violência?',
-      type: 'radio',
-      options: ['Sim', 'Não']
-    },
-    {
-      id: 'tipo_violencia',
-      title: '3.2 Se sim, qual(is) tipo(s) de violência você já sofreu?',
-      type: 'checkbox',
-      options: [
-        'Violência física (ex: agressão, espancamento)',
-        'Violência psicológica/emocional (ex: ameaças, humilhações, isolamento)',
-        'Violência sexual (ex: estupro, assédio sexual)',
-        'Violência patrimonial (ex: destruição de objetos, retenção de bens)',
-        'Violência moral (ex: calúnia, difamação)',
-        'Outro'
-      ],
-      conditional: {
-        field: 'sofreu_violencia',
-        value: 'Sim'
-      }
-    },
-    {
-      id: 'autor_violencia',
-      title: '3.3 Quem foi o autor da violência?',
-      type: 'checkbox',
-      options: [
-        'Marido/Companheiro',
-        'Ex-marido/Ex-companheiro',
-        'Parente',
-        'Amigo/Conhecido',
-        'Desconhecido',
-        'Outro'
-      ],
-      conditional: {
-        field: 'sofreu_violencia',
-        value: 'Sim'
-      }
-    },
-    {
-      id: 'frequencia_violencia',
-      title: '3.4 Com que frequência você sofre ou sofreu violência?',
-      type: 'radio',
-      options: [
-        'Uma única vez',
-        'Algumas vezes ao longo do tempo',
-        'Regularmente',
-        'Atualmente sofre violência',
-        'Nunca sofri violência'
+      title: 'Impactos da Violência',
+      description: 'Como a violência afetou diferentes aspectos da sua vida',
+      questions: [
+        'impacto_saude_fisica', 'impacto_saude_mental', 'afastamento_trabalho',
+        'impacto_educacao', 'forma_impacto_educacao', 'apoio_educacional',
+        'origem_apoio', 'educacao_ferramenta', 'mudanca_residencia'
       ]
     },
     {
-      id: 'procurou_ajuda',
-      title: '3.5 Você já procurou ajuda após sofrer violência?',
-      type: 'radio',
-      options: ['Sim', 'Não', 'Não se aplica'],
-      conditional: {
-        field: 'sofreu_violencia',
-        value: 'Sim'
-      }
-    },
-    {
-      id: 'onde_procurou_ajuda',
-      title: '3.6 Se sim, onde você procurou ajuda?',
-      type: 'checkbox',
-      options: [
-        'Delegacia da Mulher',
-        'Centro de Referência da Mulher',
-        'Serviço de Saúde',
-        'Apoio Jurídico',
-        'Família/Amigos',
-        'Outro'
-      ],
-      conditional: {
-        field: 'procurou_ajuda',
-        value: 'Sim'
-      }
-    },
-    {
-      id: 'qualidade_atendimento',
-      title: '3.7 Como você avalia a qualidade do atendimento recebido?',
-      type: 'radio',
-      options: ['Muito boa', 'Boa', 'Regular', 'Ruim', 'Muito ruim', 'Não se aplica'],
-      conditional: {
-        field: 'procurou_ajuda',
-        value: 'Sim'
-      }
-    },
-    {
-      id: 'conhece_maria_penha',
-      title: '3.8 Você conhece a Lei Maria da Penha?',
-      type: 'radio',
-      options: ['Sim', 'Não']
-    },
-    {
-      id: 'servicos_utilizados',
-      title: '3.9 Você conhece ou já utilizou algum dos seguintes serviços?',
-      type: 'checkbox',
-      options: [
-        'Disque 180',
-        'Casa Abrigo',
-        'Medida Protetiva de Urgência',
-        'Nenhum',
-        'Outro'
-      ]
-    },
-    {
-      id: 'impacto_saude_fisica',
-      title: '3.10 A violência sofrida impactou sua saúde física?',
-      type: 'radio',
-      options: ['Sim', 'Não', 'Não se aplica'],
-      conditional: {
-        field: 'sofreu_violencia',
-        value: 'Sim'
-      }
-    },
-    {
-      id: 'impacto_saude_mental',
-      title: '3.11 A violência sofrida impactou sua saúde mental?',
-      type: 'radio',
-      options: ['Sim', 'Não', 'Não se aplica'],
-      conditional: {
-        field: 'sofreu_violencia',
-        value: 'Sim'
-      }
-    },
-    {
-      id: 'afastamento_trabalho',
-      title: '3.12 Você precisou se afastar do trabalho por causa da violência?',
-      type: 'radio',
-      options: ['Sim', 'Não', 'Não se aplica'],
-      conditional: {
-        field: 'sofreu_violencia',
-        value: 'Sim'
-      }
-    },
-    {
-      id: 'impacto_educacao',
-      title: '3.13 Você acredita que a violência que sofreu impactou sua educação?',
-      type: 'radio',
-      options: ['Sim', 'Não', 'Não se aplica'],
-      conditional: {
-        field: 'sofreu_violencia',
-        value: 'Sim'
-      }
-    },
-    {
-      id: 'forma_impacto_educacao',
-      title: '3.14 Se sim, de que forma a violência impactou sua trajetória educacional?',
-      type: 'checkbox',
-      options: [
-        'Abandono escolar',
-        'Dificuldade de concentração nos estudos',
-        'Desmotivação para estudar',
-        'Mudança frequente de escola',
-        'Dificuldade de acesso a recursos educacionais',
-        'Outro'
-      ],
-      conditional: {
-        field: 'impacto_educacao',
-        value: 'Sim'
-      }
-    },
-    {
-      id: 'apoio_educacional',
-      title: '3.15 Você recebeu apoio educacional após ter sofrido violência?',
-      type: 'radio',
-      options: ['Sim', 'Não', 'Não se aplica'],
-      conditional: {
-        field: 'sofreu_violencia',
-        value: 'Sim'
-      }
-    },
-    {
-      id: 'origem_apoio',
-      title: '3.16 Se sim, de onde veio esse apoio?',
-      type: 'checkbox',
-      options: [
-        'Escola',
-        'Programas governamentais',
-        'Organizações não-governamentais',
-        'Família/Amigos',
-        'Outro'
-      ],
-      conditional: {
-        field: 'apoio_educacional',
-        value: 'Sim'
-      }
-    },
-    {
-      id: 'educacao_ferramenta',
-      title: '3.17 Você sente que a educação poderia ser uma ferramenta para superar as consequências da violência?',
-      type: 'radio',
-      options: ['Sim', 'Não', 'Não se aplica'],
-      conditional: {
-        field: 'sofreu_violencia',
-        value: 'Sim'
-      }
-    },
-    {
-      id: 'mudanca_residencia',
-      title: '3.18 Você já teve que mudar de residência por causa da violência?',
-      type: 'radio',
-      options: ['Sim', 'Não', 'Não se aplica'],
-      conditional: {
-        field: 'sofreu_violencia',
-        value: 'Sim'
-      }
-    },
-    {
-      id: 'seguranca_bairro',
-      title: '3.19 Você se sente segura no seu bairro/comunidade?',
-      type: 'radio',
-      options: ['Sim', 'Não', 'Às vezes']
-    },
-    {
-      id: 'barreiras_denuncia',
-      title: '3.20 Quais são as principais barreiras para denunciar a violência?',
-      type: 'checkbox',
-      options: [
-        'Medo de represálias',
-        'Falta de confiança nas autoridades',
-        'Dependência financeira',
-        'Falta de conhecimento sobre os direitos',
-        'Falta de apoio familiar/social',
-        'Outro'
-      ]
-    },
-    {
-      id: 'comentario',
-      title: '4.1 Gostaria de deixar algum comentário ou sugestão sobre o tema?',
-      type: 'textarea'
+      title: 'Segurança e Finalização',
+      description: 'Últimas questões e comentários',
+      questions: ['seguranca_bairro', 'barreiras_denuncia', 'comentario']
     }
-   ];
+  ];
+
+  // Encontre todas as perguntas para o passo atual
+  const getCurrentQuestions = () => {
+    const stepQuestionIds = steps[currentStep].questions;
+    return questions.filter(q => stepQuestionIds.includes(q.id));
+  };
+
+  // Verificar se a etapa atual está completa
+  useEffect(() => {
+    const currentQuestions = getCurrentQuestions();
+    
+    // Verificar se todas as perguntas obrigatórias desta etapa foram respondidas
+    const unansweredRequired = currentQuestions.filter(q => {
+      if (!q.required) return false;
+      
+      // Verificar se a pergunta deve ser mostrada com base nas condições
+      if (q.conditional) {
+        const { field, value } = q.conditional;
+        if (formData[field] !== value) return false;
+      }
+      
+      // Verificar se a pergunta tem resposta
+      return !formData[q.id] || (Array.isArray(formData[q.id]) && formData[q.id].length === 0);
+    });
+    
+    setIsValid(unansweredRequired.length === 0);
+  }, [formData, currentStep]);
 
   const handleQuestionChange = (questionId, value, additionalValue) => {
     if (additionalValue) {
@@ -369,24 +107,22 @@ const Form = () => {
     return formData[field] === value;
   };
 
+  const handleNextStep = () => {
+    window.scrollTo(0, 0);
+    if (currentStep < steps.length - 1) {
+      setCurrentStep(currentStep + 1);
+    }
+  };
+
+  const handlePrevStep = () => {
+    window.scrollTo(0, 0);
+    if (currentStep > 0) {
+      setCurrentStep(currentStep - 1);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    // Validar campos obrigatórios
-    const requiredQuestions = questions.filter(
-      q => q.required && shouldShowQuestion(q)
-    );
-    
-    const unansweredQuestions = requiredQuestions.filter(
-      q => !formData[q.id] || 
-      (Array.isArray(formData[q.id]) && formData[q.id].length === 0)
-    );
-    
-    if (unansweredQuestions.length > 0) {
-      setError('Por favor, responda todas as perguntas obrigatórias antes de enviar.');
-      window.scrollTo(0, 0);
-      return;
-    }
     
     try {
       setIsSubmitting(true);
@@ -424,7 +160,7 @@ const Form = () => {
     switch (type) {
       case 'text':
         return (
-          <div className="mb-4 p-3 border rounded shadow-sm question-container">
+          <div className="mb-4 p-3 border rounded shadow-sm question-container" key={id}>
             <h5 className="mb-3">{title} {question.required && <span className="text-danger">*</span>}</h5>
             <input
               type="text"
@@ -437,7 +173,7 @@ const Form = () => {
       
       case 'textarea':
         return (
-          <div className="mb-4 p-3 border rounded shadow-sm question-container">
+          <div className="mb-4 p-3 border rounded shadow-sm question-container" key={id}>
             <h5 className="mb-3">{title} {question.required && <span className="text-danger">*</span>}</h5>
             <textarea
               className="form-control"
@@ -450,7 +186,7 @@ const Form = () => {
       
       case 'radio':
         return (
-          <div className="mb-4 p-3 border rounded shadow-sm question-container">
+          <div className="mb-4 p-3 border rounded shadow-sm question-container" key={id}>
             <h5 className="mb-3">{title} {question.required && <span className="text-danger">*</span>}</h5>
             {options.map((option, index) => (
               <div className="form-check mb-2" key={index}>
@@ -473,14 +209,14 @@ const Form = () => {
                 </label>
               </div>
             ))}
-            {options.includes('OUTRO') && formData[id] === 'OUTRO' && (
+            {options.includes('Outro') && formData[id] === 'Outro' && (
               <div className="mt-2 ms-4">
                 <input
                   type="text"
                   className="form-control"
                   placeholder="Especifique"
                   value={formData[`${id}_outro`] || ''}
-                  onChange={(e) => handleQuestionChange(id, 'OUTRO', e.target.value)}
+                  onChange={(e) => handleQuestionChange(id, 'Outro', e.target.value)}
                 />
               </div>
             )}
@@ -489,7 +225,7 @@ const Form = () => {
       
       case 'checkbox':
         return (
-          <div className="mb-4 p-3 border rounded shadow-sm question-container">
+          <div className="mb-4 p-3 border rounded shadow-sm question-container" key={id}>
             <h5 className="mb-3">{title} {question.required && <span className="text-danger">*</span>}</h5>
             {options.map((option, index) => (
               <div className="form-check mb-2" key={index}>
@@ -525,7 +261,7 @@ const Form = () => {
                 </label>
               </div>
             ))}
-            {options.includes('OUTRO') && (formData[id] || []).includes('OUTRO') && (
+            {options.includes('Outro') && (formData[id] || []).includes('Outro') && (
               <div className="mt-2 ms-4">
                 <input
                   type="text"
@@ -534,8 +270,8 @@ const Form = () => {
                   value={formData[`${id}_outro`] || ''}
                   onChange={(e) => {
                     const currentSelections = formData[id] || [];
-                    if (!currentSelections.includes('OUTRO')) {
-                      currentSelections.push('OUTRO');
+                    if (!currentSelections.includes('Outro')) {
+                      currentSelections.push('Outro');
                     }
                     handleQuestionChange(id, currentSelections, e.target.value);
                   }}
@@ -550,11 +286,47 @@ const Form = () => {
     }
   };
 
-  return (
-    <div className="container mt-5 mb-5">
-      <div className="row justify-content-center">
-        <div className="col-lg-8">
-          {success ? (
+  // Renderiza indicador de progresso
+  const renderProgressBar = () => {
+    return (
+      <div className="progress mb-4">
+        <div 
+          className="progress-bar bg-primary" 
+          role="progressbar" 
+          style={{ width: `${((currentStep + 1) / steps.length) * 100}%` }}
+          aria-valuenow={((currentStep + 1) / steps.length) * 100} 
+          aria-valuemin="0" 
+          aria-valuemax="100"
+        >
+          {Math.round(((currentStep + 1) / steps.length) * 100)}%
+        </div>
+      </div>
+    );
+  };
+
+  const renderStepNavigation = () => {
+    return (
+      <ul className="nav nav-pills nav-fill mb-4">
+        {steps.map((step, index) => (
+          <li className="nav-item" key={index}>
+            <button 
+              className={`nav-link ${currentStep === index ? 'active' : ''} ${index < currentStep ? 'text-success' : ''}`}
+              onClick={() => setCurrentStep(index)}
+              disabled={index > currentStep && !isValid}
+            >
+              {index < currentStep ? <i className="bi bi-check-circle me-1"></i> : `${index + 1}.`} {step.title}
+            </button>
+          </li>
+        ))}
+      </ul>
+    );
+  };
+
+  if (success) {
+    return (
+      <div className="container mt-5">
+        <div className="row justify-content-center">
+          <div className="col-lg-8">
             <div className="alert alert-success" role="alert">
               <h4 className="alert-heading">Formulário enviado com sucesso!</h4>
               <p>
@@ -566,44 +338,88 @@ const Form = () => {
                 Você será redirecionado para a página inicial em alguns segundos.
               </p>
             </div>
-          ) : (
-            <div className="card shadow">
-              <div className="card-body p-4">
-              <div className="text-center mb-5">
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="container mt-5 mb-5">
+      <div className="row justify-content-center">
+        <div className="col-lg-10">
+          <div className="card shadow">
+            <div className="card-body p-4">
+              <div className="text-center mb-4">
                 <h2 className="mb-2" style={{ color: '#6a0dad' }}>Questionário Observatório da Mulher 2025</h2>
                 <p className="text-muted">Suas respostas são fundamentais para nossa pesquisa</p>
                 <hr className="my-4 mx-auto" style={{ width: '50%', borderColor: '#6a0dad', opacity: '0.5' }} />
               </div>
-                
-                {error && <div className="alert alert-danger">{error}</div>}
-                
-                <form onSubmit={handleSubmit}>
-                  {questions.map((question) => (
-                    <div key={question.id}>
-                      {renderQuestion(question)}
-                    </div>
-                  ))}
+              
+              {error && <div className="alert alert-danger">{error}</div>}
+              
+              {renderProgressBar()}
+              
+              <div className="d-none d-md-block">
+                {renderStepNavigation()}
+              </div>
+              
+              <div className="card mb-4">
+                <div className="card-header">
+                  <h4 className="m-0">{steps[currentStep].title}</h4>
+                </div>
+                <div className="card-body">
+                  <p className="text-muted mb-4">{steps[currentStep].description}</p>
                   
-                    <div className="d-grid gap-2 mt-5">
-                    <button
-                        type="submit"
-                        className="btn btn-primary btn-lg py-3"
-                        disabled={isSubmitting}
-                    >
-                        {isSubmitting ? (
-                        <>
-                            <span className="spinner-border spinner-border-sm me-2" />
-                            Enviando...
-                        </>
-                        ) : (
-                        'Enviar Respostas'
-                        )}
-                    </button>
+                  <form onSubmit={handleSubmit}>
+                    {getCurrentQuestions().map(question => renderQuestion(question))}
+                    
+                    <div className="d-flex justify-content-between mt-4">
+                      <button
+                        type="button"
+                        className="btn btn-outline-primary"
+                        onClick={handlePrevStep}
+                        disabled={currentStep === 0 || isSubmitting}
+                      >
+                        <i className="bi bi-arrow-left me-2"></i>
+                        Voltar
+                      </button>
+                      
+                      {currentStep < steps.length - 1 ? (
+                        <button
+                          type="button"
+                          className="btn btn-primary"
+                          onClick={handleNextStep}
+                          disabled={!isValid || isSubmitting}
+                        >
+                          Próximo
+                          <i className="bi bi-arrow-right ms-2"></i>
+                        </button>
+                      ) : (
+                        <button
+                          type="submit"
+                          className="btn btn-success btn-lg"
+                          disabled={isSubmitting || !isValid}
+                        >
+                          {isSubmitting ? (
+                            <>
+                              <span className="spinner-border spinner-border-sm me-2" />
+                              Enviando...
+                            </>
+                          ) : (
+                            <>
+                              <i className="bi bi-check-circle me-2"></i>
+                              Finalizar e Enviar
+                            </>
+                          )}
+                        </button>
+                      )}
                     </div>
-                </form>
+                  </form>
+                </div>
               </div>
             </div>
-          )}
+          </div>
         </div>
       </div>
     </div>
