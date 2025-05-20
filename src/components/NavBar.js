@@ -60,7 +60,7 @@ const NavBar = ({ user }) => {
               <li className="nav-item">
                 <Link className="nav-link" to="/dashboard" onClick={closeMenu}>
                   <i className="bi bi-bar-chart me-1"></i>
-                  Observatório da Mulher
+                  Gráficos
                 </Link>
               </li>
             )}
