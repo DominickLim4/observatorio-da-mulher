@@ -20,7 +20,7 @@ const NavBar = ({ user }) => {
     <nav className="navbar navbar-expand-lg navbar-dark bg-primary">
       <div className="container">
         <Link className="navbar-brand" to="/">
-          Observatório da Mulher
+          VioletaInsight
         </Link>
         <button
           className="navbar-toggler"
@@ -34,32 +34,43 @@ const NavBar = ({ user }) => {
           <ul className="navbar-nav me-auto">
             <li className="nav-item">
               <Link className="nav-link" to="/">
+                <i className="bi bi-house-door me-1"></i>
                 Início
               </Link>
             </li>
             <li className="nav-item">
               <Link className="nav-link" to="/form">
+                <i className="bi bi-clipboard-check me-1"></i>
                 Formulário
               </Link>
             </li>
             {user && (
               <li className="nav-item">
                 <Link className="nav-link" to="/dashboard">
+                  <i className="bi bi-bar-chart me-1"></i>
                   Dashboard
                 </Link>
               </li>
             )}
+            <li className="nav-item">
+              <Link className="nav-link" to="/about">
+                <i className="bi bi-info-circle me-1"></i>
+                Sobre Nós
+              </Link>
+            </li>
           </ul>
           <ul className="navbar-nav">
             {user ? (
               <li className="nav-item">
                 <button onClick={handleLogout} className="nav-link btn btn-link">
+                  <i className="bi bi-box-arrow-right me-1"></i>
                   Logout
                 </button>
               </li>
             ) : (
               <li className="nav-item">
                 <Link className="nav-link" to="/login">
+                  <i className="bi bi-person-circle me-1"></i>
                   Login
                 </Link>
               </li>
