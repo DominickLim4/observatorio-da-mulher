@@ -30,7 +30,7 @@ const NavBar = ({ user }) => {
     <nav className="navbar navbar-expand-lg navbar-dark bg-primary">
       <div className="container">
         <Link className="navbar-brand" to="/" onClick={closeMenu}>
-          VioletaInsight
+          Observatório da Mulher
         </Link>
         <button
           className="navbar-toggler"
