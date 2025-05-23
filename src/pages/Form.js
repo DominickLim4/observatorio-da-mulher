@@ -191,6 +191,25 @@ const Form = () => {
           </div>
         );
       
+      case 'select':
+        return (
+          <div className="mb-4 p-3 border rounded shadow-sm question-container" key={id}>
+            <h5 className="mb-3">{title} {question.required && <span className="text-danger">*</span>}</h5>
+            <select
+              className="form-select"
+              value={formData[id] || ''}
+              onChange={(e) => handleQuestionChange(id, e.target.value)}
+            >
+              <option value="">Selecione uma opção...</option>
+              {options.map((option, index) => (
+                <option key={index} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
+          </div>
+        );
+      
       case 'textarea':
         return (
           <div className="mb-4 p-3 border rounded shadow-sm question-container" key={id}>
