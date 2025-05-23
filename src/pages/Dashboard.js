@@ -262,14 +262,6 @@ const Dashboard = () => {
           <h2 style={{ color: '#6a0dad' }}>Dashboard de Resultados</h2>
           <p className="text-muted">Visualização dos dados coletados</p>
         </div>
-        <button 
-          className="btn btn-danger d-flex align-items-center" 
-          onClick={() => setShowConfirmDialog(true)}
-          disabled={loading || formData.length === 0}
-        >
-          <i className="bi bi-trash me-2"></i>
-          <span>Limpar Todos os Dados</span>
-        </button>
       </div>
       
       {/* Dialog de confirmação */}
